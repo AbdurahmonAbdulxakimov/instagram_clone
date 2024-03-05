@@ -1,12 +1,16 @@
 from django.db import models
 
 from users.models import User
+from post.models import Story, Post
 from utils.models import BaseModel
 
 
 class Message(BaseModel):
     content = models.TextField()
     reply = models.ForeignKey("self", on_delete=models.CASCADE, related_name="replies")
+    story = models.ForeignKey(
+        Story, on_delete=models.CASCADE, related_name="user_message"
+    )
 
     def __str__(self) -> str:
         return self.content[:16]
@@ -32,12 +36,9 @@ class UserMessage(BaseModel):
     message = models.ForeignKey(
         Message, on_delete=models.CASCADE, related_name="user_message"
     )
-    # story = models.ForeignKey(
-    #     Story, on_delete=models.CASCADE, related_name="user_message"
-    # )
 
     def __str__(self) -> str:
-        return f"{self.from_user__username} to {self.to_user__username}"
+        return f"{self.from_user_id} to {self.to_user_id}"
 
 
 class Group(BaseModel):
@@ -60,4 +61,19 @@ class UserGroupMessage(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.from_user__username} to {self.to_group__title}"
+        return f"{self.from_user_id} to {self.to_group_id}"
+
+
+class Comment(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+
+    content = models.TextField()
+
+    reply = models.ForeignKey("self", on_delete=models.CASCADE, related_name="replies")
+    users_liked = models.ManyToManyField(
+        User, on_delete=models.CASCADE, related_name="comments_liked"
+    )
+
+    def __str__(self) -> str:
+        return f"{self.user_id} to {self.post_id}"
