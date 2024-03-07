@@ -1,6 +1,7 @@
 from django.db import models
 
 from users.models import User
+from post.managers import StoryManager
 from utils.models import BaseModel
 
 
@@ -12,23 +13,15 @@ class Story(BaseModel):
     is_active = models.BooleanField(default=True)
     is_highlight = models.BooleanField(default=False)
 
-    def __str__(self) -> str:
-        return f"{self.user_id} - {self.file.name}"
-
-
-class UserStoryAction(BaseModel):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="user_story_actions"
+    users_watched = models.ManyToManyField(
+        User, related_name="stories_watched", blank=True
     )
-    story = models.ForeignKey(
-        Story, on_delete=models.CASCADE, related_name="user_story_actions"
-    )
+    users_liked = models.ManyToManyField(User, related_name="stories_liked", blank=True)
 
-    is_liked = models.BooleanField(default=False)
-    is_watched = models.BooleanField(default=False)
+    objects = StoryManager()
 
     def __str__(self) -> str:
-        return f"{self.user_id} - {self.story_id}"
+        return f"{self.user_id} - {self.file.url}"
 
 
 class HashTag(BaseModel):
@@ -39,7 +32,6 @@ class HashTag(BaseModel):
 
 
 class Post(BaseModel):
-    file = models.FileField(upload_to="posts/")
     content = models.TextField(blank=True, null=True)
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
@@ -47,20 +39,33 @@ class Post(BaseModel):
     tagged = models.ManyToManyField(User, related_name="posts_tagged")
     hash_tags = models.ManyToManyField(HashTag, related_name="posts")
 
+    users_liked = models.ManyToManyField(User, related_name="posts_liked")
+    users_saved = models.ManyToManyField(User, related_name="posts_saved")
+
     def __str__(self) -> str:
         return f"{self.user_id}  {self.created_at}"
 
 
-class UserPostAction(BaseModel):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="user_post_actions"
-    )
-    post = models.ForeignKey(
-        Post, on_delete=models.CASCADE, related_name="user_post_actions"
-    )
-
-    is_liked = models.BooleanField(default=False)
-    is_saved = models.BooleanField(default=False)
+class File(BaseModel):
+    file = models.FileField(upload_to="posts/")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="files")
 
     def __str__(self) -> str:
-        return f"{self.user_id} - {self.post_id}"
+        return self.file.url
+
+
+class Reel(BaseModel):
+    video = models.FileField(upload_to="reels/")
+
+    content = models.TextField(blank=True, null=True)
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reels")
+
+    tagged = models.ManyToManyField(User, related_name="reels_tagged", blank=True)
+    hash_tags = models.ManyToManyField(HashTag, related_name="reels", blank=True)
+
+    users_liked = models.ManyToManyField(User, related_name="reels_liked", blank=True)
+    users_saved = models.ManyToManyField(User, related_name="reels_saved", blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.user_id}  {self.created_at}"

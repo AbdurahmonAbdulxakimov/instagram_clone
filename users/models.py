@@ -23,11 +23,15 @@ class User(AbstractUser):
     first_name = None  # type: ignore
     last_name = None  # type: ignore
 
+    image = models.ImageField(upload_to="profile/", blank=True, null=True)
+
     phone = models.CharField(max_length=13, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+
     following = models.ManyToManyField(
-        "self", related_name="followers", blank=True, null=True
+        "users.User", related_name="followers", blank=True
     )
+
     website = models.CharField(max_length=255, blank=True, null=True)
     gender = models.CharField(max_length=8, choices=Gender.choices, default=Gender.PNS)
 
