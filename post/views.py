@@ -76,3 +76,28 @@ class ReelRetrieveAPIView(RetrieveAPIView):
         )
     )
     serializer_class = serializers.ReelSerializer
+
+
+class ExpoloreAPIView(generics.ListAPIView):
+    def get_queryset(self, request):
+        # QUERY
+        my_friends_liked = User.objects.filter(
+            models.Q(following=requst.user)|
+            models.Q(followers=request.user)).filter(
+            models.Q(posts_saved__id=models.OuterRef("id")) |
+            models.Q(posts_liked__id = models.OuterRef("id"))
+            ).count()
+        posts = Post.objects.annotate(
+            user_liked_count=models.Count("users_liked",filter=models.Q(users_liked___created_at__gte=timezone.now()-timezone.timedelte(hour=36))),
+            liked_friends_count = models.Subquery(my_friends_liked)
+            comments_count = models.Count("comments")
+            ).filter(
+            models.Q(user_liked_count__gte = 10_000) | 
+            models.Q(liked_friends_count__gte=5)
+            models.Q(comments_count__gte=10_000)
+        ).exclude(users_viewed=request.user).order_by("?")[:100]
+
+        post_ids = posts.values("id")
+        Post.objects.filter(id__in=post_ids).update(users_views=request.id) 
+
+        return posts
