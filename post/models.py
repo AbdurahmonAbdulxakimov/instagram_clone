@@ -41,6 +41,7 @@ class Post(BaseModel):
 
     users_liked = models.ManyToManyField(User, related_name="posts_liked")
     users_saved = models.ManyToManyField(User, related_name="posts_saved")
+    users_viewed = models.ManyToManyField(User, related_name="post_viewed")
 
     def __str__(self) -> str:
         return f"{self.user_id}  {self.created_at}"
